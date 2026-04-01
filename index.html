@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>씬 구성표</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:    #fafaf8; --bg2: #f2f0eb; --bg3: #ffffff;
+  --text:  #1c1c1a; --text2: #6b6a65; --text3: #a09e99;
+  --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.20);
+  --radius: 10px; --radius-lg: 14px;
+  --font: 'Pretendard', 'Apple SD Gothic Neo', system-ui, sans-serif;
+  --accent: #1c1c1a;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#181816; --bg2:#222220; --bg3:#2a2a27;
+    --text:#e8e6e0; --text2:#9a9890; --text3:#5a5955;
+    --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.18);
+    --accent:#e8e6e0;
+  }
+}
+body {
+  font-family: var(--font); background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+
+/* ── layout ── */
+.page { max-width: 720px; margin: 0 auto; padding: 3rem 1.5rem; flex: 1; width: 100%; }
+
+/* ── header ── */
+.site-header { margin-bottom: 3rem; }
+.site-title {
+  font-size: 13px; font-weight: 500; letter-spacing: .12em;
+  color: var(--text3); text-transform: uppercase; margin-bottom: .5rem;
+}
+.site-sub {
+  font-size: 28px; font-weight: 600; color: var(--text); line-height: 1.2;
+}
+
+/* ── toolbar ── */
+.toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.25rem; gap: 12px; flex-wrap: wrap;
+}
+.toolbar-left { font-size: 12px; color: var(--text3); }
+.btn-new {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 18px; font-size: 13px; font-weight: 500;
+  background: var(--accent); color: var(--bg);
+  border: none; border-radius: var(--radius); cursor: pointer;
+  transition: opacity .15s;
+}
+.btn-new:hover { opacity: .8; }
+.btn-new .plus { font-size: 18px; line-height: 1; font-weight: 300; }
+
+/* ── project list ── */
+.project-list { display: flex; flex-direction: column; gap: 8px; }
+
+.project-card {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--bg3); border: 0.5px solid var(--border);
+  border-radius: var(--radius-lg); padding: 1rem 1.25rem;
+  transition: border-color .15s, box-shadow .15s;
+  cursor: default;
+}
+.project-card:hover { border-color: var(--border2); }
+
+.proj-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--bg2); display: flex; align-items: center;
+  justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.proj-info { flex: 1; min-width: 0; }
+.proj-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.proj-meta  { font-size: 12px; color: var(--text3); }
+
+.proj-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.btn-open {
+  padding: 6px 16px; font-size: 13px; font-weight: 500;
+  background: var(--bg); border: 0.5px solid var(--border2);
+  color: var(--text); border-radius: var(--radius); cursor: pointer;
+  transition: background .15s;
+}
+.btn-open:hover { background: var(--bg2); }
+.btn-del {
+  padding: 6px 10px; font-size: 13px;
+  background: transparent; border: 0.5px solid var(--border);
+  color: var(--text3); border-radius: var(--radius); cursor: pointer;
+  transition: all .15s;
+}
+.btn-del:hover { border-color: #E24B4A; color: #E24B4A; }
+
+/* ── empty state ── */
+.empty-state {
+  text-align: center; padding: 4rem 0; color: var(--text3);
+}
+.empty-state .big { font-size: 40px; margin-bottom: 1rem; }
+.empty-state p { font-size: 14px; line-height: 1.8; }
+
+/* ── loading ── */
+.loading {
+  text-align: center; padding: 3rem 0; color: var(--text3); font-size: 13px;
+}
+.spinner {
+  width: 20px; height: 20px; border: 2px solid var(--border2);
+  border-top-color: var(--text2); border-radius: 50%;
+  animation: spin .8s linear infinite; margin: 0 auto 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── modal ── */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.overlay.hidden { display: none; }
+.modal {
+  background: var(--bg3); border: 0.5px solid var(--border2);
+  border-radius: var(--radius-lg); padding: 1.75rem;
+  width: 400px; max-width: 95vw;
+}
+.modal h2 { font-size: 16px; font-weight: 600; margin-bottom: 1.25rem; }
+.fl  { font-size: 12px; color: var(--text2); margin: 12px 0 5px; }
+.fl:first-of-type { margin-top: 0; }
+.modal input {
+  width: 100%; font-size: 14px; padding: 9px 12px;
+  border: 0.5px solid var(--border2); border-radius: var(--radius);
+  background: var(--bg2); color: var(--text); outline: none;
+  font-family: var(--font);
+}
+.modal input:focus { border-color: var(--text3); }
+.mactions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.5rem; }
+.btn-confirm {
+  padding: 8px 22px; font-size: 13px; font-weight: 500;
+  background: var(--accent); color: var(--bg);
+  border: none; border-radius: var(--radius); cursor: pointer; transition: opacity .15s;
+}
+.btn-confirm:hover { opacity: .8; }
+.btn-cancel {
+  padding: 8px 16px; font-size: 13px;
+  background: transparent; border: 0.5px solid var(--border2);
+  color: var(--text2); border-radius: var(--radius); cursor: pointer;
+}
+
+/* ── toast ── */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--text); color: var(--bg3); font-size: 12px;
+  padding: 8px 18px; border-radius: 20px; opacity: 0;
+  pointer-events: none; transition: opacity .25s; z-index: 300; white-space: nowrap;
+}
+.toast.show { opacity: 1; }
+
+/* ── footer ── */
+.site-footer {
+  text-align: center; padding: 1.5rem;
+  font-size: 11px; color: var(--text3);
+  border-top: 0.5px solid var(--border);
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="site-header">
+    <div class="site-title">Screenplay Board</div>
+    <div class="site-sub">내 작품 목록</div>
+  </header>
+
+  <div class="toolbar">
+    <div class="toolbar-left" id="projectCount"></div>
+    <button class="btn-new" id="btnNew">
+      <span class="plus">+</span> 새 작품
+    </button>
+  </div>
+
+  <div id="listWrap">
+    <div class="loading">
+      <div class="spinner"></div>
+      작품 목록을 불러오는 중...
+    </div>
+  </div>
+</div>
+
+<footer class="site-footer">씬 구성표 · Google Sheets 연동</footer>
+
+<!-- 새 작품 모달 -->
+<div class="overlay hidden" id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle">새 작품 만들기</h2>
+    <div class="fl">작품명</div>
+    <input id="fTitle" placeholder="홍길동전" />
+    <div class="fl">주인공의 초목표</div>
+    <input id="fGoal" placeholder="주인공이 궁극적으로 원하는 것" />
+    <div class="mactions">
+      <button class="btn-cancel" id="btnCancel">취소</button>
+      <button class="btn-confirm" id="btnConfirm">만들기</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbxrQSsvaBZV_BvphZZFxZg7tjf_u1t9u_SoDzG-54ux2vh-2Yg31tjpViF8Fy2jGS0wdg/exec';
+
+/* ── toast ── */
+function toast(msg, dur=2000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ── API calls ── */
+async function apiFetch(url) {
+  const r = await fetch(url);
+  return r.json();
+}
+async function apiPost(body) {
+  const r = await fetch(API, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+
+/* ── format date ── */
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+}
+
+/* ── render list ── */
+let projects = [];
+
+function renderList() {
+  const wrap = document.getElementById('listWrap');
+  const countEl = document.getElementById('projectCount');
+  countEl.textContent = `${projects.length}개의 작품`;
+
+  if (projects.length === 0) {
+    wrap.innerHTML = `
+      <div class="empty-state">
+        <div class="big">📋</div>
+        <p>아직 작품이 없습니다.<br>오른쪽 상단의 <strong>새 작품</strong> 버튼으로 시작하세요.</p>
+      </div>`;
+    return;
+  }
+
+  const EMOJIS = ['🎬','📖','✍️','🎭','📝','🖊️','🎞️','📜'];
+  wrap.innerHTML = '';
+  const list = document.createElement('div');
+  list.className = 'project-list';
+
+  projects.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'project-card';
+    card.innerHTML = `
+      <div class="proj-icon">${EMOJIS[i % EMOJIS.length]}</div>
+      <div class="proj-info">
+        <div class="proj-title">${p.title || '제목 없음'}</div>
+        <div class="proj-meta">${p.superGoal ? '초목표: ' + p.superGoal + ' · ' : ''}${fmtDate(p.createdAt)} 생성</div>
+      </div>
+      <div class="proj-actions">
+        <button class="btn-open" data-id="${p.id}">열기</button>
+        <button class="btn-del"  data-id="${p.id}" data-title="${p.title}">✕</button>
+      </div>`;
+    list.appendChild(card);
+  });
+
+  wrap.appendChild(list);
+
+  /* 열기 */
+  wrap.querySelectorAll('.btn-open').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const proj = projects.find(p => p.id == btn.dataset.id);
+      // board.html로 id 전달
+      location.href = `board.html?id=${proj.id}&title=${encodeURIComponent(proj.title)}&superGoal=${encodeURIComponent(proj.superGoal||'')}&actGoals=${encodeURIComponent(proj.actGoals||'["","","",""]')}`;
+    });
+  });
+
+  /* 삭제 */
+  wrap.querySelectorAll('.btn-del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const title = btn.dataset.title || '이 작품';
+      if (!confirm(`"${title}"을 삭제하시겠습니까?\n씬 데이터도 함께 삭제됩니다.`)) return;
+      btn.disabled = true;
+      const result = await apiPost({ action: 'deleteProject', id: btn.dataset.id });
+      if (result.ok) {
+        projects = projects.filter(p => p.id != btn.dataset.id);
+        toast('작품이 삭제됐습니다');
+        renderList();
+      } else {
+        toast('삭제 실패: ' + (result.error||''));
+        btn.disabled = false;
+      }
+    });
+  });
+}
+
+/* ── load projects ── */
+async function loadProjects() {
+  document.getElementById('listWrap').innerHTML = `
+    <div class="loading"><div class="spinner"></div>작품 목록을 불러오는 중...</div>`;
+  try {
+    const result = await apiFetch(`${API}?action=getProjects`);
+    if (result.ok) {
+      projects = result.data || [];
+      renderList();
+    } else {
+      document.getElementById('listWrap').innerHTML =
+        `<div class="empty-state"><p>불러오기 실패: ${result.error||'알 수 없는 오류'}</p></div>`;
+    }
+  } catch(e) {
+    document.getElementById('listWrap').innerHTML =
+      `<div class="empty-state"><p>네트워크 오류가 발생했습니다.<br>${e.message}</p></div>`;
+  }
+}
+
+/* ── new project modal ── */
+const overlay  = document.getElementById('overlay');
+const fTitle   = document.getElementById('fTitle');
+const fGoal    = document.getElementById('fGoal');
+
+document.getElementById('btnNew').addEventListener('click', () => {
+  fTitle.value = ''; fGoal.value = '';
+  overlay.classList.remove('hidden');
+  setTimeout(() => fTitle.focus(), 50);
+});
+document.getElementById('btnCancel').addEventListener('click', () => overlay.classList.add('hidden'));
+overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.add('hidden'); });
+
+document.getElementById('btnConfirm').addEventListener('click', async () => {
+  const title = fTitle.value.trim();
+  if (!title) { fTitle.focus(); toast('작품명을 입력해주세요'); return; }
+  const btn = document.getElementById('btnConfirm');
+  btn.disabled = true; btn.textContent = '저장 중...';
+
+  const result = await apiPost({
+    action: 'saveProject',
+    title,
+    superGoal: fGoal.value.trim(),
+    actGoals: ['','','',''],
+  });
+
+  btn.disabled = false; btn.textContent = '만들기';
+
+  if (result.ok) {
+    overlay.classList.add('hidden');
+    toast('작품이 만들어졌습니다 🎬');
+    await loadProjects();
+  } else {
+    toast('저장 실패: ' + (result.error||''));
+  }
+});
+
+/* enter key */
+[fTitle, fGoal].forEach(el => {
+  el.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btnConfirm').click();
+  });
+});
+
+/* ── init ── */
+loadProjects();
+</script>
+</body>
+</html>

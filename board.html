@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>씬 구성표 — 보드</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #fafaf8; --bg2: #f2f0eb; --bg3: #ffffff;
+  --text: #1c1c1a; --text2: #6b6a65; --text3: #a09e99;
+  --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+  --radius: 8px; --radius-lg: 12px;
+  --font: 'Pretendard', 'Apple SD Gothic Neo', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#1a1a18; --bg2:#232320; --bg3:#2a2a27;
+    --text:#e8e6e0; --text2:#9a9890; --text3:#5a5955;
+    --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.2);
+  }
+}
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+.app { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+.header { display:flex; align-items:center; gap:14px; padding-bottom:1rem; border-bottom:0.5px solid var(--border); margin-bottom:1rem; flex-wrap:wrap; }
+.project-title { font-size:20px; font-weight:600; border:none; background:transparent; color:var(--text); flex:1; min-width:180px; outline:none; border-bottom:1.5px solid var(--border2); padding:4px 2px; }
+.project-title::placeholder { color:var(--text3); font-weight:400; }
+.super-goal { font-size:13px; padding:6px 12px; border:0.5px solid var(--border); border-radius:var(--radius); background:var(--bg2); color:var(--text2); outline:none; width:260px; }
+.super-goal::placeholder { color:var(--text3); }
+
+.stats { display:flex; gap:20px; padding:8px 0; margin-bottom:1rem; border-bottom:0.5px solid var(--border); flex-wrap:wrap; }
+.stat { font-size:12px; color:var(--text2); }
+.stat strong { color:var(--text); font-weight:500; }
+
+.tabs { display:flex; gap:6px; margin-bottom:1rem; flex-wrap:wrap; }
+.tab { padding:6px 18px; font-size:13px; font-weight:500; border:0.5px solid var(--border2); background:var(--bg3); color:var(--text2); border-radius:var(--radius); cursor:pointer; transition:all .15s; }
+.tab:hover { background:var(--bg2); }
+.tab.active-gi    { background:#E1F5EE; color:#085041; border-color:#5DCAA5; border-left:3px solid #5DCAA5; }
+.tab.active-seung { background:#E6F1FB; color:#0C447C; border-color:#85B7EB; border-left:3px solid #85B7EB; }
+.tab.active-jeon  { background:#FAEEDA; color:#633806; border-color:#EF9F27; border-left:3px solid #EF9F27; }
+.tab.active-gyeol { background:#FAECE7; color:#4A1B0C; border-color:#F0997B; border-left:3px solid #F0997B; }
+.tab.active-overview { background:var(--bg2); color:var(--text); border-color:var(--border2); border-left:3px solid var(--text3); }
+
+.panel { display:none; }
+.panel.active { display:block; }
+.act-goal-bar { display:flex; align-items:center; gap:10px; padding:9px 14px; border-radius:var(--radius); border:0.5px solid var(--border); background:var(--bg2); margin-bottom:1rem; }
+.act-goal-label { font-size:12px; color:var(--text3); white-space:nowrap; }
+.act-goal-input { font-size:13px; flex:1; border:none; background:transparent; color:var(--text); outline:none; }
+.act-goal-input::placeholder { color:var(--text3); }
+
+.grid { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:10px; }
+@media (max-width:640px) { .grid { grid-template-columns:repeat(2,1fr); } }
+
+.seq-col { display:flex; flex-direction:column; gap:6px; min-height:80px; padding:4px; border-radius:var(--radius); transition:background .15s; }
+.seq-col.drop-target { background:rgba(93,202,165,0.09); outline:1.5px dashed #5DCAA5; }
+.seq-head { font-size:11px; font-weight:500; text-align:center; padding:5px 0; color:var(--text3); border-bottom:0.5px solid var(--border); letter-spacing:.04em; }
+
+.card {
+  background:var(--bg3); border:0.5px solid var(--border);
+  border-radius:var(--radius); padding:8px 10px;
+  cursor:grab; transition:opacity .15s, border-color .15s;
+  border-left:3px solid transparent;
+  user-select:none; -webkit-user-select:none;
+}
+.card:hover { border-color:var(--border2); }
+.card.gi    { border-left-color:#9FE1CB; }
+.card.seung { border-left-color:#85B7EB; }
+.card.jeon  { border-left-color:#EF9F27; }
+.card.gyeol { border-left-color:#F0997B; }
+.card.dragging { opacity:.3; cursor:grabbing; }
+.card.drop-above { border-top:2px solid #5DCAA5; }
+.card.drop-below { border-bottom:2px solid #5DCAA5; }
+
+.drag-handle { float:right; font-size:13px; color:var(--text3); cursor:grab; margin-left:6px; line-height:1.2; }
+.c-meta  { font-size:10px; color:var(--text3); margin-bottom:4px; font-family:monospace; }
+.c-sum   { font-size:12px; color:var(--text2); line-height:1.5; min-height:28px; }
+.c-sum.empty { color:var(--text3); font-style:italic; }
+.c-foot  { display:flex; align-items:center; justify-content:space-between; margin-top:6px; gap:4px; flex-wrap:wrap; }
+.c-chars { font-size:10px; color:var(--text3); }
+.etag    { font-size:10px; padding:1px 7px; border-radius:20px; font-weight:500; }
+
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:200; }
+.overlay.hidden { display:none; }
+.modal { background:var(--bg3); border:0.5px solid var(--border2); border-radius:var(--radius-lg); padding:1.5rem; width:400px; max-width:95vw; max-height:90vh; overflow-y:auto; }
+.modal h2 { font-size:15px; font-weight:500; margin-bottom:1rem; }
+.fl { font-size:12px; color:var(--text2); margin:10px 0 4px; }
+.row3 { display:grid; grid-template-columns:1fr 2fr 1fr; gap:6px; }
+.modal input, .modal textarea { width:100%; font-size:13px; padding:7px 10px; border:0.5px solid var(--border2); border-radius:var(--radius); background:var(--bg2); color:var(--text); outline:none; font-family:var(--font); }
+.modal textarea { resize:vertical; min-height:60px; }
+.emopts { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+.eopt { padding:3px 10px; font-size:12px; border-radius:20px; cursor:pointer; border:1.5px solid transparent; font-weight:500; transition:border-color .1s; }
+.eopt.sel { border-color:#444; }
+.mactions { display:flex; gap:8px; justify-content:flex-end; margin-top:1.25rem; }
+.btn-s { padding:7px 20px; font-size:13px; font-weight:500; border:0.5px solid var(--border2); background:var(--bg3); color:var(--text); border-radius:var(--radius); cursor:pointer; }
+.btn-c { padding:7px 20px; font-size:13px; border:0.5px solid var(--border); background:transparent; color:var(--text2); border-radius:var(--radius); cursor:pointer; }
+
+.overview-wrap { overflow-x:auto; padding-bottom:8px; }
+.overview-board { display:grid; grid-template-columns:60px repeat(20, minmax(0,1fr)); grid-template-rows:28px 22px repeat(5,auto); gap:4px; min-width:900px; }
+.ov-corner { grid-column:1; grid-row:1; }
+.ov-act-header { display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; letter-spacing:.06em; border-radius:var(--radius) var(--radius) 0 0; padding:4px 0; }
+.ov-act-gi    { background:#E1F5EE; color:#085041; }
+.ov-act-seung { background:#E6F1FB; color:#0C447C; }
+.ov-act-jeon  { background:#FAEEDA; color:#633806; }
+.ov-act-gyeol { background:#FAECE7; color:#4A1B0C; }
+.ov-seq-label { display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--text3); font-weight:500; }
+.ov-row-label { display:flex; align-items:center; justify-content:flex-end; font-size:10px; color:var(--text3); padding-right:6px; font-weight:500; }
+.ov-cell { background:var(--bg3); border:0.5px solid var(--border); border-radius:4px; padding:5px 6px; cursor:pointer; transition:border-color .12s; min-height:48px; position:relative; border-left:2px solid transparent; }
+.ov-cell:hover { border-color:var(--border2); }
+.ov-cell.gi    { border-left-color:#9FE1CB; }
+.ov-cell.seung { border-left-color:#85B7EB; }
+.ov-cell.jeon  { border-left-color:#EF9F27; }
+.ov-cell.gyeol { border-left-color:#F0997B; }
+.ov-cell-meta { font-size:9px; color:var(--text3); font-family:monospace; margin-bottom:2px; }
+.ov-cell-sum  { font-size:10px; color:var(--text2); line-height:1.4; }
+.ov-cell-sum.empty { color:var(--text3); }
+.ov-cell-emo  { position:absolute; bottom:4px; right:5px; width:7px; height:7px; border-radius:50%; }
+.ov-legend { display:flex; gap:12px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border); }
+.ov-legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text2); }
+.ov-legend-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--text); color:var(--bg3); font-size:12px; padding:8px 18px; border-radius:20px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:300; white-space:nowrap; }
+.toast.show { opacity:1; }
+
+/* ── top toolbar ── */
+.topbar {
+  display:flex; align-items:center; gap:10px;
+  padding: .6rem 1rem; background:var(--bg3);
+  border-bottom:0.5px solid var(--border);
+  position:sticky; top:0; z-index:50;
+  flex-wrap:wrap;
+}
+.topbar-left { display:flex; align-items:center; gap:8px; flex:1; min-width:0; }
+.btn-back {
+  font-size:13px; padding:5px 12px;
+  border:0.5px solid var(--border2); background:transparent;
+  color:var(--text2); border-radius:var(--radius); cursor:pointer;
+  text-decoration:none; white-space:nowrap; transition:background .15s;
+}
+.btn-back:hover { background:var(--bg2); }
+.topbar-title { font-size:14px; font-weight:500; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.topbar-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.save-status { font-size:11px; color:var(--text3); white-space:nowrap; margin-right:4px; }
+.btn-save {
+  padding:6px 16px; font-size:13px; font-weight:500;
+  background:var(--text); color:var(--bg3);
+  border:none; border-radius:var(--radius); cursor:pointer; transition:opacity .15s;
+}
+.btn-save:hover { opacity:.8; }
+.btn-save:disabled { opacity:.45; cursor:default; }
+.btn-pdf {
+  padding:6px 14px; font-size:13px;
+  border:0.5px solid var(--border2); background:transparent;
+  color:var(--text2); border-radius:var(--radius); cursor:pointer; transition:background .15s;
+}
+.btn-pdf:hover { background:var(--bg2); }
+
+/* ── print / PDF ── */
+@media print {
+  .topbar, .tabs, .act-goal-bar, .toast, .overlay,
+  .drag-handle, .stats { display:none !important; }
+
+  body { background:#fff; color:#000; }
+  .app { max-width:100%; padding:.5cm; }
+
+  /* 전체 100씬 그리드로 인쇄 */
+  #panels { display:none !important; }
+  #panel-overview { display:block !important; }
+  .overview-wrap { overflow:visible; }
+  .overview-board { min-width:unset; font-size:8px; gap:2px; }
+  .ov-cell { min-height:32px; padding:3px 4px; }
+  .ov-cell-sum { font-size:8px; }
+
+  .print-header { display:block !important; margin-bottom:.5cm; }
+  @page { margin:1cm; size:A4 landscape; }
+}
+</style>
+</head>
+<body>
+
+<!-- 인쇄 전용 헤더 (화면엔 숨김) -->
+<div class="print-header" style="display:none;">
+  <div style="font-size:18px;font-weight:600;" id="printTitle"></div>
+  <div style="font-size:12px;color:#666;margin-top:4px;" id="printGoal"></div>
+</div>
+
+<!-- 상단 툴바 -->
+<nav class="topbar">
+  <div class="topbar-left">
+    <a class="btn-back" href="index.html">← 목록</a>
+    <span class="topbar-title" id="topbarTitle">씬 구성표</span>
+  </div>
+  <div class="topbar-right">
+    <span class="save-status" id="saveStatus"></span>
+    <button class="btn-pdf" id="btnPdf">PDF 저장</button>
+    <button class="btn-save" id="btnSave">저장</button>
+  </div>
+</nav>
+
+<div class="app">
+  <div class="header">
+    <input class="project-title" id="projTitle" placeholder="작품명을 입력하세요" />
+    <input class="super-goal" id="superGoal" placeholder="주인공의 초목표" />
+  </div>
+  <div class="stats">
+    <div class="stat">총 씬: <strong>100</strong></div>
+    <div class="stat">작성 완료: <strong id="sFilled">0</strong></div>
+    <div class="stat">예상 러닝타임: <strong id="sRun">0</strong>분</div>
+  </div>
+  <div class="tabs" id="tabs">
+    <div class="tab" data-act="0">기 (1–5 SEQ)</div>
+    <div class="tab" data-act="1">승 (6–10 SEQ)</div>
+    <div class="tab" data-act="2">전 (11–15 SEQ)</div>
+    <div class="tab" data-act="3">결 (16–20 SEQ)</div>
+    <div class="tab" data-act="overview">전체 보기</div>
+  </div>
+  <div id="panels"></div>
+  <div class="panel" id="panel-overview"></div>
+</div>
+
+<div class="overlay hidden" id="overlay">
+  <div class="modal">
+    <h2 id="mTitle">씬 편집</h2>
+    <div class="fl">S# / 장소 / 시간</div>
+    <div class="row3">
+      <input id="fNum" placeholder="S#" />
+      <input id="fLoc" placeholder="장소" />
+      <input id="fTime" placeholder="시간" />
+    </div>
+    <div class="fl">씬 요약 (1~2줄)</div>
+    <textarea id="fSum" placeholder="이 씬에서 일어나는 일을 간단히 적어주세요"></textarea>
+    <div class="fl">등장인물</div>
+    <input id="fChars" placeholder="홍길동, 이순신..." />
+    <div class="fl">감정선</div>
+    <div class="emopts">
+      <div class="eopt" data-e="긴장" style="background:#FCEBEB;color:#A32D2D;">긴장</div>
+      <div class="eopt" data-e="슬픔" style="background:#E6F1FB;color:#185FA5;">슬픔</div>
+      <div class="eopt" data-e="희망" style="background:#EAF3DE;color:#3B6D11;">희망</div>
+      <div class="eopt" data-e="분노" style="background:#FAECE7;color:#993C1D;">분노</div>
+      <div class="eopt" data-e="사랑" style="background:#FBEAF0;color:#993556;">사랑</div>
+      <div class="eopt" data-e="공포" style="background:#EEEDFE;color:#3C3489;">공포</div>
+      <div class="eopt" data-e="코믹" style="background:#FAEEDA;color:#854F0B;">코믹</div>
+      <div class="eopt" data-e="중립" style="background:#F1EFE8;color:#5F5E5A;">중립</div>
+    </div>
+    <div class="mactions">
+      <button class="btn-c" id="btnC">취소</button>
+      <button class="btn-s" id="btnS">저장</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   CONFIG
+══════════════════════════════════════════ */
+const API = 'https://script.google.com/macros/s/AKfycbxrQSsvaBZV_BvphZZFxZg7tjf_u1t9u_SoDzG-54ux2vh-2Yg31tjpViF8Fy2jGS0wdg/exec';
+
+/* ── URL 파라미터에서 작품 정보 읽기 ── */
+const params    = new URLSearchParams(location.search);
+const PROJECT_ID     = params.get('id') || '';
+const PROJECT_TITLE  = params.get('title') || '제목 없음';
+const PROJECT_GOAL   = params.get('superGoal') || '';
+let   PROJECT_ACT_GOALS = ['','','',''];
+try { PROJECT_ACT_GOALS = JSON.parse(params.get('actGoals') || '["","","",""]'); } catch(e){}
+
+/* ── 초기 UI 반영 ── */
+document.getElementById('projTitle').value  = PROJECT_TITLE;
+document.getElementById('superGoal').value  = PROJECT_GOAL;
+document.getElementById('topbarTitle').textContent = PROJECT_TITLE;
+document.getElementById('printTitle').textContent  = PROJECT_TITLE;
+document.getElementById('printGoal').textContent   = PROJECT_GOAL ? '초목표: ' + PROJECT_GOAL : '';
+document.title = PROJECT_TITLE + ' — 씬 구성표';
+
+/* ══════════════════════════════════════════
+   DATA MODEL
+══════════════════════════════════════════ */
+const ACTS = [
+  { label:'기',  seqs:[1,2,3,4,5],      cls:'gi',    tabAct:'active-gi'    },
+  { label:'승',  seqs:[6,7,8,9,10],     cls:'seung', tabAct:'active-seung' },
+  { label:'전',  seqs:[11,12,13,14,15], cls:'jeon',  tabAct:'active-jeon'  },
+  { label:'결',  seqs:[16,17,18,19,20], cls:'gyeol', tabAct:'active-gyeol' },
+];
+const ECOLORS = {
+  긴장:{bg:'#FCEBEB',c:'#A32D2D'}, 슬픔:{bg:'#E6F1FB',c:'#185FA5'},
+  희망:{bg:'#EAF3DE',c:'#3B6D11'}, 분노:{bg:'#FAECE7',c:'#993C1D'},
+  사랑:{bg:'#FBEAF0',c:'#993556'}, 공포:{bg:'#EEEDFE',c:'#3C3489'},
+  코믹:{bg:'#FAEEDA',c:'#854F0B'}, 중립:{bg:'#F1EFE8',c:'#5F5E5A'},
+};
+const EMO_DOTS = {
+  긴장:'#E24B4A', 슬픔:'#378ADD', 희망:'#639922', 분노:'#D85A30',
+  사랑:'#D4537E', 공포:'#7F77DD', 코믹:'#BA7517', 중립:'#888780',
+};
+
+const emptyScene = () => ({num:'',loc:'',time:'',sum:'',chars:'',emo:''});
+
+let seqData = {};
+for (let s=1;s<=20;s++) seqData[s] = Array.from({length:5}, emptyScene);
+let actGoals    = [...PROJECT_ACT_GOALS];
+let editKey     = null;
+let selEmo      = '';
+let activeActIdx = 0;
+let drag        = null;
+let isDirty     = false; // 미저장 변경사항 여부
+
+/* ══════════════════════════════════════════
+   SAVE STATUS
+══════════════════════════════════════════ */
+function setSaveStatus(msg) {
+  document.getElementById('saveStatus').textContent = msg;
+}
+function markDirty() {
+  isDirty = true;
+  setSaveStatus('저장되지 않은 변경사항');
+}
+
+/* ══════════════════════════════════════════
+   GOOGLE SHEETS API
+══════════════════════════════════════════ */
+async function apiPost(body) {
+  const r = await fetch(API, { method:'POST', body: JSON.stringify(body) });
+  return r.json();
+}
+async function apiFetch(url) {
+  const r = await fetch(url);
+  return r.json();
+}
+
+/* ── 불러오기 ── */
+async function loadFromSheets() {
+  if (!PROJECT_ID) return;
+  setSaveStatus('불러오는 중...');
+  document.getElementById('btnSave').disabled = true;
+  try {
+    const result = await apiFetch(`${API}?action=getScenes&id=${PROJECT_ID}`);
+    if (result.ok && result.data.length > 0) {
+      // seqData 초기화
+      for (let s=1;s<=20;s++) seqData[s] = Array.from({length:5}, emptyScene);
+      result.data.forEach(row => {
+        const s = parseInt(row.seq);
+        const i = parseInt(row.idx);
+        if (s >= 1 && s <= 20 && i >= 0 && i < 5) {
+          seqData[s][i] = {
+            num:   row.num   || '',
+            loc:   row.loc   || '',
+            time:  row.time  || '',
+            sum:   row.sum   || '',
+            chars: row.chars || '',
+            emo:   row.emo   || '',
+          };
+        }
+      });
+      refreshGrid();
+      updateStats();
+      setSaveStatus('불러오기 완료');
+      isDirty = false;
+    } else {
+      setSaveStatus('새 작품');
+    }
+  } catch(e) {
+    setSaveStatus('불러오기 실패');
+  }
+  document.getElementById('btnSave').disabled = false;
+}
+
+/* ── 저장 ── */
+async function saveToSheets() {
+  if (!PROJECT_ID) { toast('작품 ID가 없습니다. 목록에서 다시 열어주세요.'); return; }
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true; btn.textContent = '저장 중...';
+  setSaveStatus('저장 중...');
+  try {
+    // 1. 프로젝트 메타 저장
+    const curGoal   = document.getElementById('superGoal').value.trim();
+    const curTitle  = document.getElementById('projTitle').value.trim();
+    const curActGoals = ACTS.map((_, ai) => document.getElementById(`ag-${ai}`)?.value || actGoals[ai] || '');
+
+    await apiPost({
+      action:    'saveProject',
+      id:        PROJECT_ID,
+      title:     curTitle,
+      superGoal: curGoal,
+      actGoals:  curActGoals,
+    });
+
+    // 2. 씬 데이터 저장
+    const scenes = [];
+    for (let s=1;s<=20;s++) {
+      seqData[s].forEach((d, i) => {
+        scenes.push({ seq:s, idx:i, ...d });
+      });
+    }
+    const result = await apiPost({ action:'saveScenes', id:PROJECT_ID, scenes });
+
+    if (result.ok) {
+      isDirty = false;
+      const now = new Date();
+      setSaveStatus(`저장 완료 · ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`);
+      toast('저장됐습니다 ✓');
+    } else {
+      setSaveStatus('저장 실패');
+      toast('저장 실패: ' + (result.error||''));
+    }
+  } catch(e) {
+    setSaveStatus('저장 실패');
+    toast('오류: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = '저장';
+}
+
+/* ══════════════════════════════════════════
+   PDF / PRINT
+══════════════════════════════════════════ */
+function printAsPDF() {
+  // 인쇄 전 overview 강제 렌더
+  renderOverview();
+  setTimeout(() => window.print(), 100);
+}
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+function toast(msg, dur=2000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ══════════════════════════════════════════
+   DRAG
+══════════════════════════════════════════ */
+function actIdxOfSeq(seq) { return Math.floor((seq-1)/5); }
+function clsOfSeq(seq)    { return ACTS[actIdxOfSeq(seq)].cls; }
+
+function buildCard(seq, idx) {
+  const d = seqData[seq][idx];
+  const hasContent = d.sum || d.num;
+  const cls  = clsOfSeq(seq);
+  const meta = [d.num?`S#${d.num}`:'', d.loc, d.time].filter(Boolean).join(' / ');
+  const eTag = d.emo && ECOLORS[d.emo]
+    ? `<span class="etag" style="background:${ECOLORS[d.emo].bg};color:${ECOLORS[d.emo].c};">${d.emo}</span>` : '';
+
+  const el = document.createElement('div');
+  el.className = `card${hasContent ? ' '+cls : ''}`;
+  el.draggable = true;
+  el.dataset.seq = seq;
+  el.dataset.idx = idx;
+  el.innerHTML =
+    `<span class="drag-handle" title="드래그로 이동">⠿</span>` +
+    `<div class="c-meta">${meta || `${seq} SEQ · ${idx+1}`}</div>` +
+    `<div class="c-sum${d.sum?'':' empty'}">${d.sum || '탭하여 씬 추가'}</div>` +
+    `<div class="c-foot"><span class="c-chars">${d.chars||''}</span>${eTag}</div>`;
+
+  el.addEventListener('click', e => {
+    if (e.target.classList.contains('drag-handle')) return;
+    openModal(seq, idx);
+  });
+  el.addEventListener('dragstart', e => {
+    drag = { seq:+el.dataset.seq, idx:+el.dataset.idx };
+    requestAnimationFrame(() => el.classList.add('dragging'));
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain','');
+  });
+  el.addEventListener('dragend', () => { drag=null; clearIndicators(); });
+  el.addEventListener('dragover', e => {
+    if (!drag) return;
+    e.preventDefault(); e.stopPropagation();
+    clearIndicators();
+    const mid = el.getBoundingClientRect().top + el.offsetHeight/2;
+    el.classList.add(e.clientY < mid ? 'drop-above' : 'drop-below');
+    el.closest('.seq-col')?.classList.add('drop-target');
+  });
+  el.addEventListener('dragleave', e => {
+    if (!el.contains(e.relatedTarget)) el.classList.remove('drop-above','drop-below');
+  });
+  el.addEventListener('drop', e => {
+    e.preventDefault(); e.stopPropagation();
+    if (!drag) return;
+    const mid = el.getBoundingClientRect().top + el.offsetHeight/2;
+    doMove(drag.seq, drag.idx, +el.dataset.seq, +el.dataset.idx, e.clientY >= mid);
+    clearIndicators();
+  });
+  return el;
+}
+
+function clearIndicators() {
+  document.querySelectorAll('.card.dragging').forEach(c=>c.classList.remove('dragging'));
+  document.querySelectorAll('.drop-above').forEach(c=>c.classList.remove('drop-above'));
+  document.querySelectorAll('.drop-below').forEach(c=>c.classList.remove('drop-below'));
+  document.querySelectorAll('.seq-col.drop-target').forEach(c=>c.classList.remove('drop-target'));
+}
+
+function doMove(fromSeq, fromIdx, toSeq, toIdx, after) {
+  if (fromSeq===toSeq && fromIdx===toIdx) return;
+  const src = seqData[fromSeq], tgt = seqData[toSeq];
+  const item = src[fromIdx];
+  if (fromSeq === toSeq) {
+    src.splice(fromIdx,1);
+    let at = after ? toIdx : toIdx;
+    if (fromIdx < toIdx) at = after ? toIdx : toIdx-1;
+    else                  at = after ? toIdx+1 : toIdx;
+    src.splice(Math.max(0,Math.min(at,src.length)),0,item);
+  } else {
+    if (tgt.filter(d=>d.sum||d.num).length >= 5) { toast('해당 SEQ가 가득 찼습니다 (최대 5씬)'); return; }
+    src[fromIdx] = emptyScene();
+    const nonEmpty = tgt.filter(d=>d.sum||d.num);
+    let at = after ? toIdx+1 : toIdx;
+    nonEmpty.splice(Math.max(0,Math.min(at,nonEmpty.length)),0,item);
+    while (nonEmpty.length < 5) nonEmpty.push(emptyScene());
+    seqData[toSeq] = nonEmpty.slice(0,5);
+    const srcNE = src.filter(d=>d.sum||d.num);
+    while (srcNE.length < 5) srcNE.push(emptyScene());
+    seqData[fromSeq] = srcNE.slice(0,5);
+  }
+  refreshGrid(); updateStats(); markDirty();
+  toast('씬 순서가 변경됐습니다');
+}
+
+/* ══════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════ */
+function refreshGrid() {
+  const ai  = activeActIdx;
+  const act = ACTS[ai];
+  const panel = document.getElementById(`panel-${ai}`);
+  let grid = panel.querySelector('.grid');
+  if (grid) grid.remove();
+
+  grid = document.createElement('div');
+  grid.className = 'grid';
+
+  act.seqs.forEach(seq => {
+    const col = document.createElement('div');
+    col.className = 'seq-col';
+    col.dataset.seq = seq;
+    col.innerHTML = `<div class="seq-head">${seq} SEQ</div>`;
+
+    col.addEventListener('dragover', e => { if(!drag) return; e.preventDefault(); col.classList.add('drop-target'); });
+    col.addEventListener('dragleave', e => { if(!col.contains(e.relatedTarget)) col.classList.remove('drop-target'); });
+    col.addEventListener('drop', e => {
+      e.stopPropagation(); if(!drag) return;
+      col.classList.remove('drop-target');
+      doMove(drag.seq, drag.idx, +col.dataset.seq, seqData[+col.dataset.seq].findLastIndex(d=>d.sum||d.num), true);
+    });
+
+    seqData[seq].forEach((_,idx) => col.appendChild(buildCard(seq,idx)));
+    grid.appendChild(col);
+  });
+  panel.appendChild(grid);
+}
+
+function render() {
+  const container = document.getElementById('panels');
+  container.innerHTML = '';
+  ACTS.forEach((act, ai) => {
+    const panel = document.createElement('div');
+    panel.className = `panel${ai===activeActIdx?' active':''}`;
+    panel.id = `panel-${ai}`;
+    const goalBar = document.createElement('div');
+    goalBar.className = 'act-goal-bar';
+    goalBar.innerHTML = `<span class="act-goal-label">${act.label}의 목표</span><input class="act-goal-input" placeholder="이 막의 이야기 목표" id="ag-${ai}" value="${actGoals[ai]}" />`;
+    panel.appendChild(goalBar);
+    container.appendChild(panel);
+    goalBar.querySelector('input').addEventListener('change', e => { actGoals[ai]=e.target.value; markDirty(); });
+  });
+  refreshGrid();
+  updateStats();
+  attachTabHandlers();
+}
+
+/* ══════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════ */
+function openModal(seq, idx) {
+  editKey = {seq,idx};
+  const d = seqData[seq][idx];
+  selEmo = d.emo||'';
+  document.getElementById('mTitle').textContent = `SEQ ${seq} · 씬 ${idx+1} 편집`;
+  document.getElementById('fNum').value   = d.num;
+  document.getElementById('fLoc').value   = d.loc;
+  document.getElementById('fTime').value  = d.time;
+  document.getElementById('fSum').value   = d.sum;
+  document.getElementById('fChars').value = d.chars;
+  document.querySelectorAll('.eopt').forEach(el=>el.classList.toggle('sel',el.dataset.e===selEmo));
+  document.getElementById('overlay').classList.remove('hidden');
+}
+function closeModal() { document.getElementById('overlay').classList.add('hidden'); editKey=null; }
+function saveModal() {
+  if (!editKey) return;
+  const {seq,idx} = editKey;
+  seqData[seq][idx] = {
+    num:   document.getElementById('fNum').value.trim(),
+    loc:   document.getElementById('fLoc').value.trim(),
+    time:  document.getElementById('fTime').value.trim(),
+    sum:   document.getElementById('fSum').value.trim(),
+    chars: document.getElementById('fChars').value.trim(),
+    emo:   selEmo,
+  };
+  closeModal(); refreshGrid(); updateStats(); markDirty();
+}
+
+/* ══════════════════════════════════════════
+   STATS
+══════════════════════════════════════════ */
+function updateStats() {
+  let f=0;
+  for (let s=1;s<=20;s++) seqData[s].forEach(d=>{ if(d.sum||d.num) f++; });
+  document.getElementById('sFilled').textContent = f;
+  document.getElementById('sRun').textContent = f;
+}
+
+/* ══════════════════════════════════════════
+   OVERVIEW
+══════════════════════════════════════════ */
+function renderOverview() {
+  const ov = document.getElementById('panel-overview');
+  const ACT_CLS     = ['gi','seung','jeon','gyeol'];
+  const ACT_HDR_CLS = ['ov-act-gi','ov-act-seung','ov-act-jeon','ov-act-gyeol'];
+  const ACT_LABELS  = ['기','승','전','결'];
+  let html = '<div class="overview-wrap"><div class="overview-board">';
+  html += '<div class="ov-corner"></div>';
+  ACT_LABELS.forEach((lbl,ai)=>{ html+=`<div class="ov-act-header ${ACT_HDR_CLS[ai]}" style="grid-column:span 5;">${lbl}</div>`; });
+  html += '<div class="ov-row-label"></div>';
+  for (let s=1;s<=20;s++) html+=`<div class="ov-seq-label">${s}</div>`;
+  for (let c=0;c<5;c++) {
+    html+=`<div class="ov-row-label">씬 ${c+1}</div>`;
+    for (let s=1;s<=20;s++) {
+      const ai  = Math.floor((s-1)/5);
+      const d   = seqData[s][c]||emptyScene();
+      const cls = (d.sum||d.num) ? ACT_CLS[ai] : '';
+      const meta= d.num ? `S#${d.num}` : '';
+      const txt = d.sum ? (d.sum.length>26 ? d.sum.slice(0,26)+'…' : d.sum) : '';
+      const dot = d.emo&&EMO_DOTS[d.emo] ? `<div class="ov-cell-emo" style="background:${EMO_DOTS[d.emo]};"></div>` : '';
+      html+=`<div class="ov-cell ${cls}" data-seq="${s}" data-idx="${c}">` +
+            `<div class="ov-cell-meta">${meta}</div>` +
+            `<div class="ov-cell-sum${txt?'':' empty'}">${txt||'—'}</div>${dot}</div>`;
+    }
+  }
+  html += '</div><div class="ov-legend">';
+  Object.entries(EMO_DOTS).forEach(([name,color])=>{
+    html+=`<div class="ov-legend-item"><div class="ov-legend-dot" style="background:${color};"></div>${name}</div>`;
+  });
+  html += '</div></div>';
+  ov.innerHTML = html;
+  ov.querySelectorAll('.ov-cell').forEach(el=>{
+    el.addEventListener('click',()=>openModal(+el.dataset.seq,+el.dataset.idx));
+  });
+}
+
+/* ══════════════════════════════════════════
+   TABS
+══════════════════════════════════════════ */
+function attachTabHandlers() {
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.onclick = () => {
+      document.querySelectorAll('.tab').forEach(t=>{t.className='tab';});
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      const act = tab.dataset.act;
+      if (act==='overview') {
+        tab.className='tab active-overview';
+        renderOverview();
+        document.getElementById('panel-overview').classList.add('active');
+      } else {
+        const prevInput = document.getElementById(`ag-${activeActIdx}`);
+        if (prevInput) actGoals[activeActIdx] = prevInput.value;
+        activeActIdx = parseInt(act);
+        tab.className = 'tab '+ACTS[activeActIdx].tabAct;
+        refreshGrid();
+        document.getElementById(`panel-${activeActIdx}`).classList.add('active');
+      }
+    };
+  });
+}
+
+/* ══════════════════════════════════════════
+   TITLE 변경 시 dirty
+══════════════════════════════════════════ */
+document.getElementById('projTitle').addEventListener('input', () => {
+  document.getElementById('topbarTitle').textContent = document.getElementById('projTitle').value;
+  document.getElementById('printTitle').textContent  = document.getElementById('projTitle').value;
+  markDirty();
+});
+document.getElementById('superGoal').addEventListener('input', () => {
+  document.getElementById('printGoal').textContent = '초목표: ' + document.getElementById('superGoal').value;
+  markDirty();
+});
+
+/* ══════════════════════════════════════════
+   BUTTON HANDLERS
+══════════════════════════════════════════ */
+document.getElementById('btnSave').addEventListener('click', saveToSheets);
+document.getElementById('btnPdf').addEventListener('click', printAsPDF);
+document.getElementById('btnC').addEventListener('click', closeModal);
+document.getElementById('btnS').addEventListener('click', saveModal);
+document.getElementById('overlay').addEventListener('click', e=>{
+  if (e.target===document.getElementById('overlay')) closeModal();
+});
+document.querySelectorAll('.eopt').forEach(el=>{
+  el.addEventListener('click',()=>{
+    selEmo = el.dataset.e===selEmo?'':el.dataset.e;
+    document.querySelectorAll('.eopt').forEach(o=>o.classList.toggle('sel',o.dataset.e===selEmo));
+  });
+});
+
+/* 페이지 이탈 경고 */
+window.addEventListener('beforeunload', e => {
+  if (isDirty) { e.preventDefault(); e.returnValue = ''; }
+});
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+render();
+document.querySelector('.tab').className = 'tab active-gi';
+loadFromSheets(); // Sheets에서 기존 씬 데이터 불러오기
+</script>
+</body>
+</html>
